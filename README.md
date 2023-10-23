@@ -16,7 +16,7 @@ CloseThreadpoolCleanupGroupMembers
 ```
 
 If you use [IDA](https://hex-rays.com/ida-free/), open kernel32.dll, go to "Exports" and search for the mentioned Win32 APIs, in this case `CreateThreadpool`. Double-clicking the function redirect us to its dissassembled code:  
-![image](https://github.com/kleiton0x00/Proxy-DLL-Loads/assets/37262788/736ec85c-1086-405a-89c7-e9bdec40443c)  
+![Screenshot from 2023-10-23 10-33-17](https://github.com/kleiton0x00/Proxy-DLL-Loads/assets/37262788/8422c046-13df-45fd-8c48-1371f52e9f43)  
 Through the assembly instructions, we see the `TpAllocPool` syscall being executed: `call    cs:__imp_TpAllocPool`
 
 If you repeat the process with the other functions, you will end up with the following syscalls:   
