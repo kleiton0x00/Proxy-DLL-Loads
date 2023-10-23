@@ -32,6 +32,21 @@ Ntdll!TpReleaseCleanupGroupMembers
 
 Now you have everything you need to start creating your own version of proxying the DLL Loads.
 
+## Debugging
+
+Set a breakpoint before the assembly code in Callbackstub get's executed. Look at right tab of [x64dbg](https://x64dbg.com/) as the registers are being populated.  
+
+https://github.com/kleiton0x00/Proxy-DLL-Loads/assets/37262788/f21c5184-8393-4c18-8aa0-f447f1161a38
+
+
+```
+RAX -> pointer to LoadLibraryA
+RCX -> library name string 
+```
+
+## Result  
+![Screenshot from 2023-10-21 20-21-05](https://github.com/kleiton0x00/Proxy-DLL-Loads/assets/37262788/8acd32b0-f2b6-4c06-8f6b-ff14bf05c8aa)
+
 ## Resources  
 https://0xdarkvortex.dev/proxying-dll-loads-for-hiding-etwti-stack-tracing/  
 https://github.com/hlldz/misc/tree/main/proxy_calls  
