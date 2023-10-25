@@ -30,7 +30,7 @@ Ntdll!TpSetTimer
 Ntdll!TpReleaseCleanupGroupMembers
 ```
 
-Now you have everything you need to start creating your own version of proxying the DLL Loads.
+Now you have everything you need to start creating your own version of proxying the DLL Loads. You can look at [this documentation](https://processhacker.sourceforge.io/doc/nttp_8h.html#adad18de6710381f08cf36a0fa72e7529) from Process Hacker to help you implement the undocumented syscalls in your code.  
 
 ## Debugging
 
@@ -49,6 +49,7 @@ RCX -> library name string
 ## Resources  
 https://0xdarkvortex.dev/proxying-dll-loads-for-hiding-etwti-stack-tracing/  
 https://github.com/hlldz/misc/tree/main/proxy_calls  
+https://processhacker.sourceforge.io/doc/nttp_8h.html#adad18de6710381f08cf36a0fa72e7529  
 
 ## Detections
 
