@@ -57,6 +57,12 @@ https://0xdarkvortex.dev/proxying-dll-loads-for-hiding-etwti-stack-tracing/
 https://github.com/hlldz/misc/tree/main/proxy_calls  
 https://processhacker.sourceforge.io/doc/nttp_8h.html#adad18de6710381f08cf36a0fa72e7529  
 
+## OPSEC Considerations
+
+- Custom implmentation of GetModuleHandleA/GetProcAddress  
+- Don't use VirtualProtect to trigger the VEH  
+- Avoid the RX address being pushed to stack, by not storing the LoadLibraryA address in RIP
+
 ## Detections
 
 https://github.com/elastic/protections-artifacts/blob/main/behavior/rules/defense_evasion_library_loaded_via_a_callback_function.toml  
