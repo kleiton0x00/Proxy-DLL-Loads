@@ -13,7 +13,7 @@ LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
         // Get the address of "LoadLibraryA"
         FARPROC loadLibraryAddr = GetProcAddress(GetModuleHandleA("kernel32.dll"), "LoadLibraryA");
 
-        // Set RAX register to the address of "LoadLibraryA"
+        // Set RIP register to the address of "LoadLibraryA"
         ExceptionInfo->ContextRecord->Rip = (DWORD64)loadLibraryAddr;
         // RCX hold the argument (library name)
         ExceptionInfo->ContextRecord->Rcx = (DWORD64)moduleName;
