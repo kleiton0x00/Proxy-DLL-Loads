@@ -1,8 +1,8 @@
-#include <Windows.h>
+#include <windows.h>
 #include <stdio.h>
 
 // Module to load, change to your liking
-static LPCSTR moduleName = "user32.dll";
+static LPCSTR moduleName = "winhttp.dll";
 
 // Exception handler function
 LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
@@ -13,13 +13,17 @@ LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
         // Get the address of "LoadLibraryA"
         FARPROC loadLibraryAddr = GetProcAddress(GetModuleHandleA("kernel32.dll"), "LoadLibraryA");
 
-        // Set RIP register to the address of "LoadLibraryA"
-        ExceptionInfo->ContextRecord->Rip = (DWORD64)loadLibraryAddr;
-        // RCX hold the argument (library name)
+        // Set RAX register to the address of "LoadLibraryA"
+        ExceptionInfo->ContextRecord->Rax = (DWORD64)loadLibraryAddr;
+
+        // Jump to RAX
+        ExceptionInfo->ContextRecord->Rip = ExceptionInfo->ContextRecord->Rax;
+
+        // RCX holds the argument (library name)
         ExceptionInfo->ContextRecord->Rcx = (DWORD64)moduleName;
 
         // Resume execution
-        return EXCEPTION_CONTINUE_EXECUTION; //Continue to next instruction
+        return EXCEPTION_CONTINUE_EXECUTION; // Continue to the next instruction
     }
 
     // Continue searching for other exception handlers
@@ -29,7 +33,7 @@ LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 HMODULE proxiedLoadLibraryA(LPCSTR libName)
 {
     // Just something to get its address to trigger the VEH
-    void(WINAPI* o_Sleep)(DWORD dwMilliseconds) = Sleep;
+    void(WINAPI * o_Sleep)(DWORD dwMilliseconds) = Sleep;
 
     // Install the Vectored Exception Handler
     PVOID handler = AddVectoredExceptionHandler(1, VectoredExceptionHandler);
@@ -55,4 +59,5 @@ HMODULE proxiedLoadLibraryA(LPCSTR libName)
 int main() {
     HMODULE user32 = proxiedLoadLibraryA(moduleName);
     printf("%s Address: %p\n", moduleName, user32);
+    getchar();
 }
