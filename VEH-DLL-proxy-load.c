@@ -1,8 +1,31 @@
 #include <windows.h>
 #include <stdio.h>
 
+typedef BOOL(WINAPI* fnCheckGadget)						(PVOID);
+
 // Module to load, change to your liking
 static LPCSTR moduleName = "winhttp.dll";
+
+PVOID FindGadget(PVOID pModule, fnCheckGadget CallbackCheck)
+{
+    for (int i = 0;; i++)
+    {
+        if (CallbackCheck((PVOID)((UINT_PTR)pModule + i)))
+            return (PVOID)((UINT_PTR)pModule + i);
+    }
+}
+
+BOOL fnGadgetJmpRax(PVOID pAddr)
+{
+
+    if (
+        ((PBYTE)pAddr)[0] == 0xFF &&
+        ((PBYTE)pAddr)[1] == 0xe0
+        )
+        return TRUE;
+    else
+        return FALSE;
+}
 
 // Exception handler function
 LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
@@ -16,8 +39,10 @@ LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
         // Set RAX register to the address of "LoadLibraryA"
         ExceptionInfo->ContextRecord->Rax = (DWORD64)loadLibraryAddr;
 
-        // Jump to RAX
-        ExceptionInfo->ContextRecord->Rip = ExceptionInfo->ContextRecord->Rax;
+        // Jump to RAX via ROP Gadget
+        PVOID pNtdll = GetModuleHandleA("kernel32.dll");
+        PVOID pJmpRaxGadget = FindGadget(pNtdll, fnGadgetJmpRax);
+        ExceptionInfo->ContextRecord->Rip = (DWORD64)pJmpRaxGadget;
 
         // RCX holds the argument (library name)
         ExceptionInfo->ContextRecord->Rcx = (DWORD64)moduleName;
