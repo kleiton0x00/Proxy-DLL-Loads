@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 
-typedef BOOL(WINAPI* fnCheckGadget)						(PVOID);
+typedef BOOL(WINAPI* fnCheckGadget)(PVOID);
 
 // Module to load, change to your liking
 static LPCSTR moduleName = "winhttp.dll";
@@ -17,7 +17,6 @@ PVOID FindGadget(PVOID pModule, fnCheckGadget CallbackCheck)
 
 BOOL fnGadgetJmpRax(PVOID pAddr)
 {
-
     if (
         ((PBYTE)pAddr)[0] == 0xFF &&
         ((PBYTE)pAddr)[1] == 0xe0
