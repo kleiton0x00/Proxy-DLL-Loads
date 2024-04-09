@@ -61,7 +61,6 @@ https://processhacker.sourceforge.io/doc/nttp_8h.html#adad18de6710381f08cf36a0fa
 
 - Custom implmentation of GetModuleHandleA/GetProcAddress  
 - Don't use VirtualProtect to trigger the VEH  
-- Avoid the RX address being pushed to stack, by not storing the LoadLibraryA address in RIP
 
 ## Detections
 
