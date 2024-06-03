@@ -7,6 +7,7 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include "CFG.h"
 
 #define ALLOC_ON_CODE _Pragma("section(\".text\")") __declspec(allocate(".text"))
 
@@ -44,9 +45,9 @@ typedef NTSTATUS(NTAPI* TPWAITFORWAIT) (_Inout_ PTP_WAIT  	Wait,
 HMODULE proxiedLoadLibraryA(LPCSTR libName) {
 
     PTP_WAIT WaitReturn = NULL;
-    HANDLE hEvent       = NULL;
-    UINT i              = 0;
-    
+    HANDLE hEvent = NULL;
+    UINT i = 0;
+
     LOADLIBRARY_ARGS loadLibraryArgs = { 0 };
     loadLibraryArgs.pLoadLibraryA = (UINT_PTR)GetProcAddress(GetModuleHandleA("kernel32.dll"), "LoadLibraryA");
     loadLibraryArgs.lpLibFileName = libName;
@@ -54,7 +55,7 @@ HMODULE proxiedLoadLibraryA(LPCSTR libName) {
     FARPROC pTpAllocWait = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpAllocWait");
     FARPROC pTpSetWait = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpSetWait");
     FARPROC pTpWaitForWait = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpWaitForWait");
-    
+
     // Create an auto-reset event.
     hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -62,6 +63,13 @@ HMODULE proxiedLoadLibraryA(LPCSTR libName) {
         // Error Handling
         return 0;
     }
+
+    if (!markCFGValid_nt((PVOID)CallbackStub))
+    {
+        puts("[!] Something went horribly wrong!");
+        return 0;
+    }
+    printf("[+] Success! CFG Bypassed\n");
 
     ((TPALLOCWAIT)pTpAllocWait)(&WaitReturn, (PTP_WAIT_CALLBACK)(unsigned char*)CallbackStub, &loadLibraryArgs, 0);
 

