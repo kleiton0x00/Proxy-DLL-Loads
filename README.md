@@ -1,11 +1,11 @@
 # Proxy DLL Loads
 A repository with different scripts to demonstrate the DLL-load proxying using undocumented Syscalls or VEH. This repo is not about teaching you what DLL Load proxying is and how it works, it is greatly explained on [this blogpost](https://0xdarkvortex.dev/proxying-dll-loads-for-hiding-etwti-stack-tracing/). Instead, the main focus is on explaining how the DLL be loaded using VEH and on finding undocumented callback functions by reversing the DLLs and creating your own version. Below are the two methods used to proxy DLL Load:  
 
-## 1. VEH  
+## CFG Bypass
 
-We'll leverage the **VEH (Vectored Exception Handler)** to modify the context, especially RIP register to take us to the LoadLibraryA, and the RCX to hold the function's argument (module name) of `LoadLibraryA`. To trigger our exception, VirtualProtect is used to set the page to `PAGE_GUARD`, thus triggering the `STATUS_GUARD_PAGE_VIOLATION`.
+Due to the fact that TpAlloc* techniques are kinda ROP-based, a CFG bypass is very likely to be needed inside. Based on the testing, the [Ekko_CFG_Bypass ](https://github.com/Crypt0s/Ekko_CFG_Bypass) by @Crypt0s does a good job netralizing CFG (by marking the **CallbackStub** as `CFG_CALL_TARGET_VALID` is the way to go). Thank you @snovvcrash for the suggestion and for the [#4](https://github.com/kleiton0x00/Proxy-DLL-Loads/issues/4).
 
-## 2. Tp* Syscalls
+## Tp* Syscalls
 
 ### Hunting for undocumented syscalls
 
