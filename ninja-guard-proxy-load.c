@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 typedef BOOL(WINAPI* fnCheckGadget)(PVOID);
+typedef HMODULE(WINAPI* LoadLibraryA_t)(LPCSTR lpLibFileName);
 
 // Module to load, change to your liking
 static LPCSTR moduleName = "winhttp.dll";
@@ -54,34 +55,30 @@ LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-HMODULE proxiedLoadLibraryA(LPCSTR libName)
-{
-    // Just something to get its address to trigger the VEH
-    void(WINAPI * o_Sleep)(DWORD dwMilliseconds) = Sleep;
+HMODULE proxiedLoadLibraryA(){
+    DWORD old = 0;
 
-    // Install the Vectored Exception Handler
-    PVOID handler = AddVectoredExceptionHandler(1, VectoredExceptionHandler);
-    if (!handler)
-    {
-        fprintf(stderr, "Failed to install Vectored Exception Handler\n");
-        return nullptr;
-    }
+    // register exception handler as first one
+    PVOID handler = AddVectoredExceptionHandler(1, &VectoredExceptionHandler);
+    // set the PAGE_GUARD on LoadLibraryA() function
+    VirtualProtect(LoadLibraryA, 1, PAGE_EXECUTE_READ | PAGE_GUARD, &old);
 
-    // Triggering the VEH by setting page to PAGE_GUARD
-    DWORD oldProtection = 0;
-    VirtualProtect((LPVOID)Sleep, 1, PAGE_EXECUTE_READ | PAGE_GUARD, &oldProtection);
+    // Hooking the function, so the returned address will not be pushed in stack. The first argument will be replaced with the intended module name.
+    LoadLibraryA("doesntexist.dll");
+
+    printf("[+] LoadLibraryA Guard Completed");
 
     // The module got loaded, so retrieve its base address
     HMODULE addr = GetModuleHandleA(moduleName);
 
     // Remove the Vectored Exception Handler
-    RemoveVectoredExceptionHandler(handler);
+    RemoveVectoredExceptionHandler(&handler);
 
     return addr;
 }
 
 int main() {
-    HMODULE user32 = proxiedLoadLibraryA(moduleName);
+    HMODULE user32 = proxiedLoadLibraryA();
     printf("%s Address: %p\n", moduleName, user32);
     getchar();
 }
