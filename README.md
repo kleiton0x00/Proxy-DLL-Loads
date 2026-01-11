@@ -1,15 +1,15 @@
 # Proxy DLL Loads
-A repository with different scripts to demonstrate the DLL-load proxying using undocumented Syscalls or VEH. This repo is not about teaching you what DLL Load proxying is and how it works, it is greatly explained on [this blogpost](https://0xdarkvortex.dev/proxying-dll-loads-for-hiding-etwti-stack-tracing/). Instead, the main focus is on explaining how the DLL be loaded using VEH and on finding undocumented callback functions by reversing the DLLs and creating your own version. Below are the two methods used to proxy DLL Load:  
+A repository with different scripts to demonstrate the DLL-load proxying using undocumented Functions and VEH. This repo is not about teaching you what DLL Load proxying is and how it works, it is greatly explained on [this blogpost](https://0xdarkvortex.dev/proxying-dll-loads-for-hiding-etwti-stack-tracing/). Instead, the main focus is on explaining how the DLL be loaded using VEH and on finding undocumented callback functions by reversing the DLLs and creating your own version. Below are the two methods used to proxy DLL Load:  
 
 ## 1. VEH  
 
 We'll leverage the **VEH (Vectored Exception Handler)** to modify the context, especially RIP register to take us to the LoadLibraryA, and the RCX to hold the function's argument (module name) of `LoadLibraryA`. To trigger our exception, VirtualProtect is used to set the page to `PAGE_GUARD`, thus triggering the `STATUS_GUARD_PAGE_VIOLATION`.
 
-## 2. Tp* Syscalls
+## 2. Tp* Functions
 
-### Hunting for undocumented syscalls
+### Hunting for undocumented functions
 
-Before getting in directly to reversing the DLLs, we need to first know what to look for. We can start by looking at the Microsoft documentation (MSDN), which provides an excellent [example](https://learn.microsoft.com/en-us/windows/win32/procthread/using-the-thread-pool-functions?source=recommendations) of a custom thread pool, which creates a work item and a thread pool timer. The code alone is also suitable for archiving the execution of `LoadLibrary` via callback functions, but as already known, the userland functions are prone to hooking. So using their respective syscalls would be a better approach. Looking at the MSDN documentation, the example code uses the following Win32API functions:  
+Before getting in directly to reversing the DLLs, we need to first know what to look for. We can start by looking at the Microsoft documentation (MSDN), which provides an excellent [example](https://learn.microsoft.com/en-us/windows/win32/procthread/using-the-thread-pool-functions?source=recommendations) of a custom thread pool, which creates a work item and a thread pool timer. The code alone is also suitable for archiving the execution of `LoadLibrary` via callback functions, but as already known, the userland functions are prone to hooking. So using their respective function would be a better approach. Looking at the MSDN documentation, the example code uses the following Win32API functions:  
 
 ```
 CreateThreadpool
@@ -23,9 +23,9 @@ CloseThreadpoolCleanupGroupMembers
 
 If you use [IDA](https://hex-rays.com/ida-free/), open kernel32.dll, go to "Exports" and search for the mentioned Win32 APIs, in this case `CreateThreadpool`. Double-clicking the function redirect us to its dissassembled code:  
 ![Screenshot from 2023-10-23 10-33-17](https://github.com/kleiton0x00/Proxy-DLL-Loads/assets/37262788/8422c046-13df-45fd-8c48-1371f52e9f43)  
-Through the assembly instructions, we see the `TpAllocPool` syscall being executed: `call    cs:__imp_TpAllocPool`
+Through the assembly instructions, we see the `TpAllocPool` function being executed: `call    cs:__imp_TpAllocPool`
 
-If you repeat the process with the other functions, you will end up with the following syscalls:   
+If you repeat the process with the other functions, you will end up with the following functions:   
 ```
 Ntdll!TpAllocPool
 Ntdll!TpSetPoolMaxThreads
@@ -36,7 +36,7 @@ Ntdll!TpSetTimer
 Ntdll!TpReleaseCleanupGroupMembers
 ```
 
-Now you have everything you need to start creating your own version of proxying the DLL Loads. You can look at [this documentation](https://processhacker.sourceforge.io/doc/nttp_8h.html#adad18de6710381f08cf36a0fa72e7529) from Process Hacker to help you implement the undocumented syscalls in your code.  
+Now you have everything you need to start creating your own version of proxying the DLL Loads. You can look at [this documentation](https://processhacker.sourceforge.io/doc/nttp_8h.html#adad18de6710381f08cf36a0fa72e7529) from Process Hacker to help you implement the undocumented functions in your code.  
 
 ### Debugging
 
@@ -52,10 +52,27 @@ RCX -> library name string
 ### Result  
 ![Screenshot from 2023-10-21 20-21-05](https://github.com/kleiton0x00/Proxy-DLL-Loads/assets/37262788/2db0e36d-53e9-4697-b976-b1260f5bfcdd)
 
+## 3. Tp* Functions with Call Gadget
+
+This is the same as the Tp* PoC, but additionally uses call gadgets from `AuthenticateFAM_SecureFP.dll` to insert arbitrary modules in the call stack during module load, breaking signatures used in detection rules.
+
+Below is the dissassembled part where the call gadget and ret is located:  
+
+```asm
+AuthenticateFAM_SecureFP.dll:
+   1800041db:   ff d0                   call   rax
+   1800041dd:   33 c0                   xor    eax,eax
+   1800041df:   48 83 c4 28             add    rsp,0x28
+   1800041e3:   c3                      ret
+```
+
+The use of gadgets was introduced to bypass [Elastic callstack detection rule](https://github.com/elastic/protections-artifacts/blob/6e9ee22c5a7f57b85b0cb063adba9a3c72eca348/behavior/rules/windows/defense_evasion_library_loaded_via_a_callback_function.toml). For more technical information on how this works, please refer to the initial [research](https://offsec.almond.consulting/evading-elastic-callstack-signatures.html) by [@SAERXCIT](https://github.com/SAERXCIT).
+
 ## Resources  
 https://0xdarkvortex.dev/proxying-dll-loads-for-hiding-etwti-stack-tracing/  
 https://github.com/hlldz/misc/tree/main/proxy_calls  
 https://processhacker.sourceforge.io/doc/nttp_8h.html#adad18de6710381f08cf36a0fa72e7529  
+https://offsec.almond.consulting/evading-elastic-callstack-signatures.html  
 
 ## OPSEC Considerations
 
